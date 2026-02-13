@@ -267,7 +267,7 @@
       <button class="btn" id="expandAll">全部展開</button>
       <button class="btn" id="collapseAll">全部收合</button>
       <label class="toggle" title="開啟後拖曳節點會吸附回環狀佈局">
-        <input id="snap" type="checkbox" checked />
+        <input id="snap" type="checkbox" />
         吸附佈局
       </label>
     </div>
@@ -419,7 +419,7 @@
       hidden: new Set(),
       focusedId: null,
       query: '',
-      snap: true,
+      snap: false,
       draggingId: null,
       dragOffset: {x:0,y:0},
     };
@@ -567,7 +567,7 @@
       el.addEventListener('pointerup', ()=>{
         state.draggingId = null;
         el.style.cursor = 'grab';
-        if(state.snap) snapBack();
+        // 不再自動重新排列，改為由「吸附佈局」開關或「重置佈局」按鈕手動觸發
       });
 
       return el;
