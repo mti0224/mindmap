@@ -1,0 +1,796 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>以你為中心的心智圖</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#0f1733;
+      --panel2:#0c1430;
+      --text:#e9ecff;
+      --muted:#aab1e6;
+      --line:rgba(233,236,255,.14);
+      --chip:rgba(233,236,255,.08);
+      --chip2:rgba(233,236,255,.12);
+      --accent:#7c9cff;
+      --ok:#43d19e;
+      --warn:#ffcc66;
+      --shadow: 0 12px 30px rgba(0,0,0,.35);
+      --radius:18px;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans TC", "PingFang TC", "Heiti TC", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: radial-gradient(1200px 700px at 30% 20%, rgba(124,156,255,.25), transparent 60%),
+                  radial-gradient(900px 600px at 80% 65%, rgba(67,209,158,.18), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      overflow:hidden;
+    }
+    header{
+      position:fixed;
+      top:18px;
+      left:18px;
+      right:18px;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      z-index:5;
+      pointer-events:none;
+    }
+    .brand{
+      pointer-events:auto;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      padding:12px 14px;
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(15,23,51,.9), rgba(12,20,48,.75));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      max-width:min(720px, 100%);
+    }
+    .dot{
+      width:12px;
+      height:12px;
+      border-radius:999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 6px rgba(124,156,255,.16);
+      flex:0 0 auto;
+    }
+    h1{
+      margin:0;
+      font-size:16px;
+      letter-spacing:.3px;
+      line-height:1.1;
+    }
+    .sub{
+      margin:0;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.2;
+    }
+    .controls{
+      pointer-events:auto;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(15,23,51,.9), rgba(12,20,48,.75));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      flex-wrap:wrap;
+    }
+    .controls input[type="text"]{
+      width:min(240px, 52vw);
+      border-radius:12px;
+      border:1px solid rgba(233,236,255,.16);
+      background: rgba(0,0,0,.22);
+      color:var(--text);
+      padding:9px 10px;
+      outline:none;
+    }
+    .controls input[type="text"]::placeholder{ color:rgba(233,236,255,.45); }
+    .btn{
+      border:1px solid rgba(233,236,255,.16);
+      background: rgba(233,236,255,.08);
+      color:var(--text);
+      padding:9px 10px;
+      border-radius:12px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .btn:hover{ background: rgba(233,236,255,.12); }
+    .btn:active{ transform: translateY(1px); }
+    .toggle{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:12px;
+      color:var(--muted);
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px solid rgba(233,236,255,.16);
+      background: rgba(233,236,255,.06);
+    }
+    .toggle input{ accent-color: var(--accent); }
+
+    #wrap{
+      position:fixed;
+      inset:0;
+      display:grid;
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr;
+    }
+
+    /* SVG stage */
+    #stage{
+      width:100vw;
+      height:100vh;
+      display:block;
+    }
+
+    /* Node chips in overlay (for keyboard accessibility & crisp text) */
+    #overlay{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+    }
+    .node{
+      position:absolute;
+      transform: translate(-50%, -50%);
+      pointer-events:auto;
+      padding:10px 12px;
+      border-radius: 999px;
+      border:1px solid rgba(233,236,255,.16);
+      background: rgba(233,236,255,.08);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 24px rgba(0,0,0,.30);
+      display:flex;
+      gap:10px;
+      align-items:center;
+      cursor:grab;
+      user-select:none;
+      min-width: 160px;
+      max-width: 260px;
+    }
+    .node.center{
+      min-width: 220px;
+      background: linear-gradient(180deg, rgba(124,156,255,.22), rgba(233,236,255,.08));
+      border-color: rgba(124,156,255,.35);
+    }
+    .node .badge{
+      width:10px;height:10px;border-radius:999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 6px rgba(124,156,255,.14);
+      flex:0 0 auto;
+    }
+    .node .title{
+      font-size:13px;
+      font-weight:700;
+      line-height:1.1;
+      margin:0;
+    }
+    .node .hint{
+      font-size:11px;
+      color:var(--muted);
+      line-height:1.2;
+      margin:2px 0 0;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .node .chev{
+      margin-left:auto;
+      font-size:12px;
+      color:rgba(233,236,255,.65);
+      border:1px solid rgba(233,236,255,.14);
+      background: rgba(0,0,0,.18);
+      width:26px;height:26px;
+      border-radius:999px;
+      display:grid;
+      place-items:center;
+      flex:0 0 auto;
+    }
+    .node.collapsed{ opacity:.92; }
+    .node.dim{ opacity:.18; filter: saturate(.5); }
+    .node.highlight{ outline:2px solid rgba(124,156,255,.65); }
+
+    /* Side panel */
+    #panel{
+      position:fixed;
+      right:18px;
+      bottom:18px;
+      width:min(420px, calc(100vw - 36px));
+      max-height: min(62vh, 520px);
+      overflow:auto;
+      border-radius: var(--radius);
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(15,23,51,.92), rgba(12,20,48,.80));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      padding:14px;
+      z-index:6;
+    }
+    #panel h2{ margin:0 0 6px; font-size:14px; }
+    #panel p{ margin:0 0 10px; color:var(--muted); font-size:12px; line-height:1.55; }
+    .chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+    .chip{
+      font-size:12px;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid rgba(233,236,255,.14);
+      background: rgba(233,236,255,.08);
+      color:var(--text);
+    }
+    .chip.ok{ border-color: rgba(67,209,158,.35); background: rgba(67,209,158,.10); }
+    .chip.warn{ border-color: rgba(255,204,102,.35); background: rgba(255,204,102,.10); }
+
+    .small{
+      font-size:11px;
+      color:rgba(233,236,255,.55);
+      margin-top:10px;
+      line-height:1.4;
+    }
+
+    /* Mobile tweaks */
+    @media (max-width: 640px){
+      header{ top:12px; left:12px; right:12px; flex-direction:column; align-items:stretch; }
+      .brand{ width:100%; }
+      .controls{ width:100%; }
+      #panel{ right:12px; bottom:12px; }
+      .node{ min-width: 150px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand" aria-label="標題區">
+      <div class="dot" aria-hidden="true"></div>
+      <div>
+        <h1>以你為中心的心智圖</h1>
+        <p class="sub">可拖曳節點｜點節點展開/收合｜搜尋會高亮匹配內容</p>
+      </div>
+    </div>
+
+    <div class="controls" aria-label="控制列">
+      <input id="q" type="text" placeholder="搜尋：例如『遊戲』、『AWS』、『YouTube』…" />
+      <button class="btn" id="reset">重置佈局</button>
+      <button class="btn" id="expandAll">全部展開</button>
+      <button class="btn" id="collapseAll">全部收合</button>
+      <label class="toggle" title="開啟後拖曳節點會吸附回環狀佈局">
+        <input id="snap" type="checkbox" checked />
+        吸附佈局
+      </label>
+    </div>
+  </header>
+
+  <div id="wrap">
+    <svg id="stage" xmlns="http://www.w3.org/2000/svg" aria-label="連線畫布">
+      <defs>
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="2.5" result="blur" />
+          <feColorMatrix in="blur" type="matrix" values="
+              1 0 0 0 0
+              0 1 0 0 0
+              0 0 1 0 0
+              0 0 0 12 -6" result="glow"/>
+          <feMerge>
+            <feMergeNode in="glow"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+      <g id="edges"></g>
+    </svg>
+    <div id="overlay" aria-label="節點層"></div>
+  </div>
+
+  <aside id="panel" aria-live="polite">
+    <h2 id="panelTitle">點任一節點</h2>
+    <p id="panelDesc">右下角會顯示該節點的描述與關聯。你也可以拖曳節點調整位置。</p>
+    <div class="chips" id="panelChips"></div>
+    <div class="small">提示：按 <b>Esc</b> 清除搜尋；按 <b>Enter</b> 會跳到第一個匹配節點。</div>
+  </aside>
+
+  <script>
+    // -------------------------------
+    // Data
+    // -------------------------------
+    const data = {
+      id: 'you',
+      label: '你（中心）',
+      hint: '技術型創作者 × 系統開發者 × 數據導向思考',
+      desc: '這張圖把「你長期穩定在做的事」放在最內圈，外圈是支撐能力、延伸興趣與可能職涯。',
+      tags: ['核心', '長期行為', '可迭代'],
+      children: [
+        {
+          id: 'core_dev',
+          label: '系統與程式開發',
+          hint: 'Python / Bot / AWS / 自動化',
+          desc: '偏工程師本體：你常把需求做成可用的工具或服務（bot、腳本、自動化流程）。',
+          tags: ['Python', 'Backend', 'Automation', 'AWS'],
+          children: [
+            { id:'dev_python', label:'Python', hint:'腳本/服務/資料處理', desc:'常用來做 bot、資料處理、演算法實作與自動化。', tags:['腳本','服務','資料處理'] },
+            { id:'dev_bot', label:'Bot / 自動化', hint:'Discord / 工作流', desc:'把重複工作流程化，提升效率（例如 Discord bot）。', tags:['Discord','自動化','工具化'] },
+            { id:'dev_cloud', label:'AWS / 部署', hint:'環境、服務、維運', desc:'把程式穩定跑起來、能更新、能維運，是工程落地能力。', tags:['AWS','部署','維運'] },
+            { id:'dev_data', label:'資料格式與API', hint:'JSON / 結構化', desc:'你常用結構化資料（JSON）管理遊戲/專案資料，利於擴充與查詢。', tags:['JSON','API','結構化資料'] },
+          ]
+        },
+        {
+          id: 'core_game',
+          label: '遊戲數據與機制分析',
+          hint: 'LINE Rangers / 數值 / 機率 / 模擬',
+          desc: '你會把遊戲機制當成「可量化系統」來拆解：數值、概率、效率與策略。',
+          tags: ['Game analytics', 'Simulation', 'Balance'],
+          children: [
+            { id:'game_lr', label:'LINE Rangers 分析', hint:'角色/裝備/技能', desc:'長期且高密度投入：角色、裝備、技能機制、隊伍搭配與meta觀察。', tags:['角色','裝備','技能','隊伍'] },
+            { id:'game_prob', label:'機率與期望值', hint:'抽卡/掉落/策略', desc:'用機率分佈、期望值與邏輯推演來評估策略與收益。', tags:['機率','期望值','策略'] },
+            { id:'game_sim', label:'模擬系統', hint:'扭蛋/數值推演', desc:'把規則寫成可運行的模擬，得到可比較的數據。', tags:['模擬','規則','比較'] },
+            { id:'game_tools', label:'玩家工具', hint:'篩選器/計算器', desc:'把分析做成工具，讓玩家能快速決策（或讓自己更高效產出內容）。', tags:['工具','使用者','效率'] },
+          ]
+        },
+        {
+          id: 'core_creator',
+          label: '技術內容創作',
+          hint: 'YouTube / 教學 / 系統解釋',
+          desc: '你不只「做」，還會「講清楚」。這讓你具備技術影響力與社群經營能力。',
+          tags: ['YouTube', '教學', '社群'],
+          children: [
+            { id:'cr_youtube', label:'YouTube 內容', hint:'分析/教學/觀點', desc:'將複雜內容結構化輸出，吸引與維繫觀眾。', tags:['內容','剪輯','敘事'] },
+            { id:'cr_explain', label:'系統化表達', hint:'把複雜講簡單', desc:'把機制、數據、架構用觀眾聽得懂的方式講出來。', tags:['表達','結構','教學'] },
+            { id:'cr_community', label:'社群經營', hint:'Discord / 互動', desc:'能在社群中收集需求、回饋並轉化成內容或功能。', tags:['Discord','互動','回饋'] },
+          ]
+        },
+        {
+          id: 'skills',
+          label: '支撐能力模組',
+          hint: '邏輯/數學/AI應用/產品思維',
+          desc: '這些能力支撐你把想法做成系統、做成工具、做成內容。',
+          tags: ['能力', '底層支撐'],
+          children: [
+            { id:'sk_math', label:'邏輯與數學', hint:'演算法/機率/推導', desc:'你常用推導與計算去確認系統行為，而不是憑感覺。', tags:['演算法','機率','推導'] },
+            { id:'sk_ai', label:'AI / 演算法應用', hint:'CV/模型理解', desc:'你有接觸 AI 與 CV，偏向「能用、能整合」的應用能力（不限醫療）。', tags:['AI','CV','整合'] },
+            { id:'sk_product', label:'產品思維', hint:'使用者與價值', desc:'你會想「給誰用、怎麼用、值不值得做」，這是產品型工程師的核心。', tags:['使用者','價值','迭代'] },
+          ]
+        },
+        {
+          id: 'careers',
+          label: '可能職涯路線',
+          hint: '多路並行、可融合',
+          desc: '以下是從你的核心行為自然延伸的路線；你也可以把其中兩條合併成獨特職涯。',
+          tags: ['職涯', '路線'],
+          children: [
+            { id:'c_backend', label:'系統/後端工程師', hint:'服務化與維運', desc:'把工具/系統做成穩定服務，包含部署、監控與迭代。', tags:['Backend','DevOps','維運'] },
+            { id:'c_ai', label:'AI 應用工程師', hint:'模型 × 系統整合', desc:'把模型接到真實產品或工具上，重點是落地與可用性。', tags:['AI','整合','落地'] },
+            { id:'c_game', label:'遊戲數據工程/分析', hint:'機制量化', desc:'專注遊戲數據、平衡、模擬、策略分析與工具化。', tags:['Game','Analytics','Simulation'] },
+            { id:'c_creator', label:'技術創作者/教育者', hint:'內容影響力', desc:'用內容建立個人品牌，結合工具與分析形成護城河。', tags:['Creator','教育','品牌'] },
+            { id:'c_product', label:'技術產品開發者', hint:'工具 × 使用者', desc:'最貼近你：做出有人用的東西，快速迭代，並用內容/社群放大影響。', tags:['產品','工具','迭代'] },
+          ]
+        },
+      ]
+    };
+
+    // -------------------------------
+    // Helpers
+    // -------------------------------
+    const overlay = document.getElementById('overlay');
+    const edgesG = document.getElementById('edges');
+    const stage = document.getElementById('stage');
+
+    const panelTitle = document.getElementById('panelTitle');
+    const panelDesc = document.getElementById('panelDesc');
+    const panelChips = document.getElementById('panelChips');
+
+    const q = document.getElementById('q');
+    const resetBtn = document.getElementById('reset');
+    const expandAllBtn = document.getElementById('expandAll');
+    const collapseAllBtn = document.getElementById('collapseAll');
+    const snapToggle = document.getElementById('snap');
+
+    const flat = [];
+    const parent = new Map();
+    const children = new Map();
+
+    function walk(node, p=null){
+      flat.push(node);
+      if(p) parent.set(node.id, p.id);
+      if(node.children?.length){
+        children.set(node.id, node.children.map(c=>c.id));
+        node.children.forEach(c=>walk(c, node));
+      } else {
+        children.set(node.id, []);
+      }
+    }
+    walk(data);
+
+    // state
+    const state = {
+      pos: new Map(),
+      collapsed: new Set(),
+      hidden: new Set(),
+      focusedId: null,
+      query: '',
+      snap: true,
+      draggingId: null,
+      dragOffset: {x:0,y:0},
+    };
+
+    // layout rings
+    function ringLayout(){
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const cx = w/2;
+      const cy = h/2;
+
+      // compute depth
+      const depth = new Map();
+      depth.set(data.id, 0);
+      const queue = [data.id];
+      while(queue.length){
+        const id = queue.shift();
+        const d = depth.get(id);
+        for(const ch of (children.get(id)||[])){
+          depth.set(ch, d+1);
+          queue.push(ch);
+        }
+      }
+
+      // group by depth
+      const byDepth = new Map();
+      for(const n of flat){
+        const d = depth.get(n.id) ?? 0;
+        if(!byDepth.has(d)) byDepth.set(d, []);
+        byDepth.get(d).push(n);
+      }
+
+      // radii per ring
+      const base = Math.min(w,h);
+      const radii = {
+        0: 0,
+        1: base*0.18,
+        2: base*0.30,
+        3: base*0.42,
+        4: base*0.54,
+      };
+
+      // place
+      for(const [d, nodes] of byDepth.entries()){
+        if(d===0){
+          state.pos.set(data.id, {x:cx, y:cy});
+          continue;
+        }
+        const r = radii[d] ?? (base*(0.18 + d*0.12));
+        const step = (Math.PI*2) / nodes.length;
+        const start = -Math.PI/2;
+        nodes.forEach((n, i)=>{
+          const a = start + i*step;
+          const x = cx + Math.cos(a)*r;
+          const y = cy + Math.sin(a)*r;
+          state.pos.set(n.id, {x,y});
+        });
+      }
+    }
+
+    // compute visibility based on collapsed
+    function recomputeHidden(){
+      state.hidden.clear();
+      function hideSubtree(id){
+        for(const ch of (children.get(id)||[])){
+          state.hidden.add(ch);
+          hideSubtree(ch);
+        }
+      }
+      for(const id of state.collapsed){
+        hideSubtree(id);
+      }
+    }
+
+    // -------------------------------
+    // Rendering
+    // -------------------------------
+    const nodeEls = new Map();
+
+    function createNodeEl(node){
+      const el = document.createElement('div');
+      el.className = 'node' + (node.id===data.id ? ' center' : '');
+      el.setAttribute('role', 'button');
+      el.setAttribute('tabindex', '0');
+      el.dataset.id = node.id;
+
+      const badge = document.createElement('div');
+      badge.className = 'badge';
+      if(node.id===data.id) badge.style.background = 'var(--ok)';
+
+      const text = document.createElement('div');
+      const t = document.createElement('p');
+      t.className = 'title';
+      t.textContent = node.label;
+      const h = document.createElement('p');
+      h.className = 'hint';
+      h.textContent = node.hint || '';
+      text.appendChild(t);
+      text.appendChild(h);
+
+      const chev = document.createElement('div');
+      chev.className = 'chev';
+      chev.textContent = '▾';
+
+      el.appendChild(badge);
+      el.appendChild(text);
+      el.appendChild(chev);
+
+      // click: focus
+      el.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        focusNode(node.id);
+      });
+
+      // dblclick: toggle collapse
+      el.addEventListener('dblclick', (e)=>{
+        e.preventDefault();
+        e.stopPropagation();
+        toggleCollapse(node.id);
+      });
+
+      // keyboard
+      el.addEventListener('keydown', (e)=>{
+        if(e.key==='Enter') focusNode(node.id);
+        if(e.key===' '){ e.preventDefault(); focusNode(node.id); }
+        if(e.key==='Backspace' || e.key==='Delete') toggleCollapse(node.id);
+      });
+
+      // drag
+      el.addEventListener('pointerdown', (e)=>{
+        state.draggingId = node.id;
+        el.setPointerCapture(e.pointerId);
+        el.style.cursor = 'grabbing';
+        const p = state.pos.get(node.id);
+        state.dragOffset.x = p.x - e.clientX;
+        state.dragOffset.y = p.y - e.clientY;
+      });
+      el.addEventListener('pointermove', (e)=>{
+        if(state.draggingId !== node.id) return;
+        const x = e.clientX + state.dragOffset.x;
+        const y = e.clientY + state.dragOffset.y;
+        state.pos.set(node.id, {x, y});
+        render();
+      });
+      el.addEventListener('pointerup', ()=>{
+        state.draggingId = null;
+        el.style.cursor = 'grab';
+        if(state.snap) snapBack();
+      });
+
+      return el;
+    }
+
+    function ensureNodes(){
+      for(const n of flat){
+        if(!nodeEls.has(n.id)){
+          const el = createNodeEl(n);
+          nodeEls.set(n.id, el);
+          overlay.appendChild(el);
+        }
+      }
+    }
+
+    function edgePath(a, b){
+      // smooth cubic curve
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const mx = a.x + dx*0.5;
+      const my = a.y + dy*0.5;
+      const c1x = a.x + dx*0.25;
+      const c1y = a.y + dy*0.05;
+      const c2x = a.x + dx*0.75;
+      const c2y = a.y + dy*0.95;
+      return `M ${a.x} ${a.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${b.x} ${b.y}`;
+    }
+
+    function renderEdges(){
+      edgesG.innerHTML = '';
+      const frag = document.createDocumentFragment();
+
+      for(const n of flat){
+        if(n.id===data.id) continue;
+        const pid = parent.get(n.id);
+        if(!pid) continue;
+        if(state.hidden.has(n.id)) continue;
+        if(state.hidden.has(pid)) continue;
+
+        const a = state.pos.get(pid);
+        const b = state.pos.get(n.id);
+        if(!a || !b) continue;
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+        path.setAttribute('d', edgePath(a,b));
+        path.setAttribute('fill','none');
+        path.setAttribute('stroke','rgba(233,236,255,.20)');
+        path.setAttribute('stroke-width','1.35');
+        path.setAttribute('stroke-linecap','round');
+        path.setAttribute('filter','url(#glow)');
+        frag.appendChild(path);
+      }
+
+      edgesG.appendChild(frag);
+    }
+
+    function renderNodes(){
+      for(const n of flat){
+        const el = nodeEls.get(n.id);
+        const p = state.pos.get(n.id);
+        if(!el || !p) continue;
+
+        const isHidden = state.hidden.has(n.id);
+        el.style.display = isHidden ? 'none' : 'flex';
+        el.style.left = p.x + 'px';
+        el.style.top  = p.y + 'px';
+
+        // collapsed visuals
+        const hasKids = (children.get(n.id)||[]).length > 0;
+        const isCollapsed = state.collapsed.has(n.id);
+        el.classList.toggle('collapsed', isCollapsed);
+        el.querySelector('.chev').textContent = hasKids ? (isCollapsed ? '▸' : '▾') : '•';
+
+        // search dim/highlight
+        const hit = matchNode(n, state.query);
+        el.classList.toggle('dim', state.query && !hit);
+        el.classList.toggle('highlight', state.query && hit);
+
+        // focus ring
+        el.classList.toggle('highlight', (state.focusedId===n.id) || (state.query && hit));
+      }
+    }
+
+    function render(){
+      recomputeHidden();
+      renderEdges();
+      renderNodes();
+    }
+
+    // -------------------------------
+    // Interactions
+    // -------------------------------
+    function findNode(id){ return flat.find(n=>n.id===id); }
+
+    function focusNode(id){
+      state.focusedId = id;
+      const node = findNode(id);
+      if(!node) return;
+
+      // update panel
+      panelTitle.textContent = node.label;
+      panelDesc.textContent = node.desc || node.hint || '';
+      panelChips.innerHTML = '';
+      const tags = (node.tags||[]).slice(0, 12);
+      for(const t of tags){
+        const c = document.createElement('span');
+        c.className = 'chip';
+        if(['核心','長期行為','可迭代','能力','職涯'].some(k=>t.includes(k))) c.classList.add('ok');
+        if(['可能','路線'].some(k=>t.includes(k))) c.classList.add('warn');
+        c.textContent = t;
+        panelChips.appendChild(c);
+      }
+
+      render();
+    }
+
+    function toggleCollapse(id){
+      if(id===data.id) return; // keep center always expanded
+      const hasKids = (children.get(id)||[]).length>0;
+      if(!hasKids) return;
+      if(state.collapsed.has(id)) state.collapsed.delete(id);
+      else state.collapsed.add(id);
+      render();
+    }
+
+    function collapseAll(){
+      state.collapsed.clear();
+      for(const n of flat){
+        if(n.id===data.id) continue;
+        if((children.get(n.id)||[]).length>0) state.collapsed.add(n.id);
+      }
+      render();
+    }
+
+    function expandAll(){
+      state.collapsed.clear();
+      render();
+    }
+
+    function matchNode(node, query){
+      if(!query) return false;
+      const q = query.trim().toLowerCase();
+      if(!q) return false;
+      const hay = [node.label, node.hint, node.desc, ...(node.tags||[])].filter(Boolean).join(' ').toLowerCase();
+      return hay.includes(q);
+    }
+
+    function jumpToFirstMatch(){
+      const query = state.query.trim();
+      if(!query) return;
+      const first = flat.find(n=>matchNode(n, query) && !state.hidden.has(n.id));
+      if(first){
+        focusNode(first.id);
+        const el = nodeEls.get(first.id);
+        el?.focus?.();
+      }
+    }
+
+    function snapBack(){
+      // softly re-apply ring layout while preserving manual tweaks a bit
+      const before = new Map(state.pos);
+      ringLayout();
+      for(const [id, p] of state.pos.entries()){
+        const b = before.get(id);
+        if(!b) continue;
+        // lerp to target
+        state.pos.set(id, {
+          x: b.x*0.35 + p.x*0.65,
+          y: b.y*0.35 + p.y*0.65,
+        });
+      }
+      render();
+    }
+
+    // global click -> focus center
+    document.addEventListener('click', ()=> focusNode(data.id));
+
+    // search
+    q.addEventListener('input', ()=>{
+      state.query = q.value;
+      render();
+    });
+
+    // keyboard shortcuts
+    document.addEventListener('keydown', (e)=>{
+      if(e.key==='Escape'){
+        q.value = '';
+        state.query = '';
+        render();
+      }
+      if(e.key==='Enter' && document.activeElement===q){
+        jumpToFirstMatch();
+      }
+    });
+
+    resetBtn.addEventListener('click', ()=>{
+      state.collapsed.clear();
+      ringLayout();
+      focusNode(data.id);
+      render();
+    });
+
+    expandAllBtn.addEventListener('click', ()=>{ expandAll(); });
+    collapseAllBtn.addEventListener('click', ()=>{ collapseAll(); });
+
+    snapToggle.addEventListener('change', ()=>{
+      state.snap = snapToggle.checked;
+      if(state.snap) snapBack();
+    });
+
+    // resize
+    window.addEventListener('resize', ()=>{
+      ringLayout();
+      render();
+    });
+
+    // -------------------------------
+    // Boot
+    // -------------------------------
+    ensureNodes();
+    ringLayout();
+    focusNode(data.id);
+    render();
+  </script>
+</body>
+</html>
