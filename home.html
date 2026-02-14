@@ -7,7 +7,6 @@
   <style>
     :root{
       --bg:#070b16;
-      --panel: rgba(15,23,51,.88);
       --text:#e9ecff;
       --muted:#aab1e6;
       --line:rgba(233,236,255,.14);
@@ -80,14 +79,7 @@
     .pill.b{ border-color: rgba(67,209,158,.30); background: rgba(67,209,158,.10); }
     .pill.c{ border-color: rgba(255,204,102,.30); background: rgba(255,204,102,.10); }
 
-    .help{
-      pointer-events:auto;
-      display:flex;
-      gap:10px;
-      align-items:center;
-      justify-content:flex-end;
-      flex-wrap:wrap;
-    }
+    .help{ pointer-events:auto; display:flex; gap:10px; align-items:center; justify-content:flex-end; flex-wrap:wrap; }
 
     .btn{
       border:1px solid rgba(233,236,255,.16);
@@ -100,9 +92,19 @@
     }
     .btn:hover{ background: rgba(233,236,255,.12); }
 
+    /* canvas */
     #wrap{ position:fixed; inset:0; }
-    #stage{ width:100vw; height:100vh; display:block; }
 
+    /* #viewport is the panning/zooming container */
+    #viewport{
+      position:absolute;
+      inset:0;
+      transform-origin: 0 0;
+      cursor: grab;
+    }
+    #viewport.grabbing{ cursor: grabbing; }
+
+    #stage{ width:100vw; height:100vh; display:block; }
     #overlay{ position:absolute; inset:0; }
 
     .node{
@@ -115,9 +117,10 @@
       backdrop-filter: blur(10px);
       box-shadow: 0 10px 24px rgba(0,0,0,.28);
       user-select:none;
-      cursor:default;
+      cursor: grab;
       max-width: 280px;
     }
+    .node:active{ cursor: grabbing; }
 
     .node strong{ font-size:13px; font-weight:800; }
     .node span{ display:block; margin-top:2px; font-size:11px; color: var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -131,8 +134,6 @@
     .node.catA{ border-color: rgba(124,156,255,.30); background: rgba(124,156,255,.10); }
     .node.catB{ border-color: rgba(67,209,158,.28); background: rgba(67,209,158,.10); }
     .node.catC{ border-color: rgba(255,204,102,.28); background: rgba(255,204,102,.10); }
-
-    .node:hover{ outline:2px solid rgba(233,236,255,.18); }
 
     #detail{
       position:fixed;
@@ -153,13 +154,7 @@
     #detail h2{ margin:0 0 6px; font-size:14px; }
     #detail p{ margin:0 0 10px; color:var(--muted); font-size:12px; line-height:1.55; }
     .chips{ display:flex; flex-wrap:wrap; gap:8px; }
-    .chip{
-      font-size:12px;
-      padding:7px 10px;
-      border-radius:999px;
-      border:1px solid rgba(233,236,255,.14);
-      background: rgba(233,236,255,.06);
-    }
+    .chip{ font-size:12px; padding:7px 10px; border-radius:999px; border:1px solid rgba(233,236,255,.14); background: rgba(233,236,255,.06); }
 
     @media (max-width: 720px){
       header{ flex-direction:column; align-items:stretch; }
@@ -189,7 +184,7 @@
 
   <div class="help">
     <div class="card" style="padding:10px 12px;">
-      <div style="font-size:12px; color:var(--muted); line-height:1.4;">提示：把滑鼠移到節點上會顯示重點；點節點可固定右下角資訊。</div>
+      <div style="font-size:12px; color:var(--muted); line-height:1.4;">操作：拖曳空白處可平移；拖曳節點可調位置；滑鼠滾輪可縮放。</div>
       <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
         <button class="btn" id="recenter">重新置中</button>
         <button class="btn" id="toggleLabels">切換簡潔模式</button>
@@ -199,24 +194,26 @@
 </header>
 
 <div id="wrap">
-  <svg id="stage" xmlns="http://www.w3.org/2000/svg" aria-label="連線畫布">
-    <defs>
-      <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-        <feGaussianBlur stdDeviation="2.2" result="blur" />
-        <feColorMatrix in="blur" type="matrix" values="
-            1 0 0 0 0
-            0 1 0 0 0
-            0 0 1 0 0
-            0 0 0 12 -6" result="glow"/>
-        <feMerge>
-          <feMergeNode in="glow"/>
-          <feMergeNode in="SourceGraphic"/>
-        </feMerge>
-      </filter>
-    </defs>
-    <g id="edges"></g>
-  </svg>
-  <div id="overlay" aria-label="節點層"></div>
+  <div id="viewport" aria-label="畫布視窗">
+    <svg id="stage" xmlns="http://www.w3.org/2000/svg" aria-label="連線畫布">
+      <defs>
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="2.2" result="blur" />
+          <feColorMatrix in="blur" type="matrix" values="
+              1 0 0 0 0
+              0 1 0 0 0
+              0 0 1 0 0
+              0 0 0 12 -6" result="glow"/>
+          <feMerge>
+            <feMergeNode in="glow"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+      <g id="edges"></g>
+    </svg>
+    <div id="overlay" aria-label="節點層"></div>
+  </div>
 </div>
 
 <aside id="detail" aria-live="polite">
@@ -227,7 +224,7 @@
 
 <script>
   // =========================
-  // 展示型資料（較多節點）
+  // 資料
   // =========================
   const data = {
     id: 'center',
@@ -330,11 +327,11 @@
   };
 
   // =========================
-  // 佈局與渲染（展示用：自動排好、不提供拖曳）
+  // Build flat maps
   // =========================
   const overlay = document.getElementById('overlay');
-  const edgesG = document.getElementById('edges');
-  const stage = document.getElementById('stage');
+  const edgesG  = document.getElementById('edges');
+  const viewport = document.getElementById('viewport');
 
   const dTitle = document.getElementById('dTitle');
   const dDesc  = document.getElementById('dDesc');
@@ -355,6 +352,9 @@
   }
   walk(data);
 
+  // =========================
+  // Layout (world coordinates)
+  // =========================
   const pos = new Map();
   let compact = false;
   let pinnedId = data.id;
@@ -389,7 +389,6 @@
     }
 
     const base = Math.min(w,h);
-    // 展示型：拉開距離、避免擠在一起
     const radii = compact
       ? {0:0, 1: base*0.20, 2: base*0.34, 3: base*0.48, 4: base*0.60}
       : {0:0, 1: base*0.26, 2: base*0.44, 3: base*0.62, 4: base*0.78};
@@ -398,9 +397,10 @@
       if(d===0){ pos.set(data.id, {x:cx, y:cy}); continue; }
       const r = radii[d] ?? (base*(0.26 + d*0.16));
       const step = (Math.PI*2) / nodes.length;
-      // 每圈給一點角度偏移，減少直線疊在一起
       const start = -Math.PI/2 + d*0.22;
       nodes.forEach((n, i)=>{
+        // only auto-place if not manually moved
+        if(manual.has(n.id)) return;
         const a = start + i*step;
         pos.set(n.id, { x: cx + Math.cos(a)*r, y: cy + Math.sin(a)*r });
       });
@@ -417,7 +417,11 @@
     return `M ${a.x} ${a.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${b.x} ${b.y}`;
   }
 
+  // =========================
+  // Nodes
+  // =========================
   const nodeEls = new Map();
+  const manual = new Set(); // nodes user moved
 
   function catClass(n){
     if(n.id===data.id) return 'center';
@@ -433,20 +437,50 @@
     el.dataset.id = n.id;
     el.innerHTML = `<strong>${n.label}</strong><span>${n.hint||''}</span>`;
 
+    // Hover shows detail if not pinned by click
     el.addEventListener('mouseenter', ()=>{
       if(pinnedId) return;
       setDetail(n.id);
     });
-
     el.addEventListener('mouseleave', ()=>{
       if(pinnedId) return;
       setDetail(data.id);
     });
 
+    // Click pins detail panel
     el.addEventListener('click', (e)=>{
       e.stopPropagation();
       pinnedId = n.id;
       setDetail(n.id);
+    });
+
+    // Drag node (in world coords)
+    el.addEventListener('pointerdown', (e)=>{
+      e.stopPropagation();
+      el.setPointerCapture(e.pointerId);
+      dragState.draggingNodeId = n.id;
+      dragState.lastX = e.clientX;
+      dragState.lastY = e.clientY;
+      viewport.classList.add('grabbing');
+    });
+
+    el.addEventListener('pointermove', (e)=>{
+      if(dragState.draggingNodeId !== n.id) return;
+      const dx = (e.clientX - dragState.lastX) / view.scale;
+      const dy = (e.clientY - dragState.lastY) / view.scale;
+      dragState.lastX = e.clientX;
+      dragState.lastY = e.clientY;
+
+      const p = pos.get(n.id) || {x: window.innerWidth/2, y: window.innerHeight/2};
+      pos.set(n.id, {x: p.x + dx, y: p.y + dy});
+      manual.add(n.id);
+      renderEdges();
+      renderNodes();
+    });
+
+    el.addEventListener('pointerup', ()=>{
+      if(dragState.draggingNodeId === n.id) dragState.draggingNodeId = null;
+      viewport.classList.remove('grabbing');
     });
 
     return el;
@@ -462,47 +496,9 @@
     }
   }
 
-  function renderEdges(){
-    edgesG.innerHTML = '';
-    const frag = document.createDocumentFragment();
-
-    for(const n of flat){
-      if(n.id===data.id) continue;
-      const pid = parent.get(n.id);
-      if(!pid) continue;
-      const a = pos.get(pid);
-      const b = pos.get(n.id);
-      if(!a||!b) continue;
-
-      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
-      path.setAttribute('d', edgePath(a,b));
-      path.setAttribute('fill','none');
-      path.setAttribute('stroke','rgba(233,236,255,.20)');
-      path.setAttribute('stroke-width','1.35');
-      path.setAttribute('stroke-linecap','round');
-      path.setAttribute('filter','url(#glow)');
-      frag.appendChild(path);
-    }
-
-    edgesG.appendChild(frag);
-  }
-
-  function renderNodes(){
-    for(const n of flat){
-      const el = nodeEls.get(n.id);
-      const p  = pos.get(n.id);
-      if(!el||!p) continue;
-      el.style.left = p.x+'px';
-      el.style.top  = p.y+'px';
-      if(compact){
-        // 簡潔模式：只留標題
-        el.querySelector('span').style.display = 'none';
-      } else {
-        el.querySelector('span').style.display = 'block';
-      }
-    }
-  }
-
+  // =========================
+  // Detail panel
+  // =========================
   function setDetail(id){
     const n = flat.find(x=>x.id===id) || data;
     dTitle.textContent = (id===data.id) ? `${data.label}（中心）` : n.label;
@@ -516,35 +512,144 @@
     });
   }
 
-  function render(){
+  // =========================
+  // Render
+  // =========================
+  function renderEdges(){
+    edgesG.innerHTML = '';
+    const frag = document.createDocumentFragment();
+    for(const n of flat){
+      if(n.id===data.id) continue;
+      const pid = parent.get(n.id);
+      if(!pid) continue;
+      const a = pos.get(pid);
+      const b = pos.get(n.id);
+      if(!a || !b) continue;
+
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d', edgePath(a,b));
+      path.setAttribute('fill','none');
+      path.setAttribute('stroke','rgba(233,236,255,.20)');
+      path.setAttribute('stroke-width','1.35');
+      path.setAttribute('stroke-linecap','round');
+      path.setAttribute('filter','url(#glow)');
+      frag.appendChild(path);
+    }
+    edgesG.appendChild(frag);
+  }
+
+  function renderNodes(){
+    for(const n of flat){
+      const el = nodeEls.get(n.id);
+      const p  = pos.get(n.id);
+      if(!el || !p) continue;
+      el.style.left = p.x+'px';
+      el.style.top  = p.y+'px';
+      el.querySelector('span').style.display = compact ? 'none' : 'block';
+    }
+  }
+
+  function renderAll(){
     ringLayout();
     renderEdges();
     renderNodes();
   }
 
-  // interactions
+  // =========================
+  // Pan + Zoom (view transform)
+  // =========================
+  const view = { tx: 0, ty: 0, scale: 1 };
+  const dragState = { panning:false, draggingNodeId:null, lastX:0, lastY:0 };
+
+  function applyView(){
+    viewport.style.transform = `translate(${view.tx}px, ${view.ty}px) scale(${view.scale})`;
+  }
+
+  // Pan on empty space
+  viewport.addEventListener('pointerdown', (e)=>{
+    if(e.target.closest('.node')) return; // nodes handled separately
+    dragState.panning = true;
+    dragState.lastX = e.clientX;
+    dragState.lastY = e.clientY;
+    viewport.classList.add('grabbing');
+  });
+
+  viewport.addEventListener('pointermove', (e)=>{
+    if(!dragState.panning) return;
+    const dx = e.clientX - dragState.lastX;
+    const dy = e.clientY - dragState.lastY;
+    dragState.lastX = e.clientX;
+    dragState.lastY = e.clientY;
+    view.tx += dx;
+    view.ty += dy;
+    applyView();
+  });
+
+  window.addEventListener('pointerup', ()=>{
+    dragState.panning = false;
+    viewport.classList.remove('grabbing');
+  });
+
+  // Zoom with wheel (optional but useful when panels block view)
+  viewport.addEventListener('wheel', (e)=>{
+    e.preventDefault();
+    const prev = view.scale;
+    const delta = -e.deltaY * 0.001;
+    const next = Math.max(0.55, Math.min(2.2, prev + delta));
+
+    // zoom around cursor
+    const rect = viewport.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+
+    // convert mouse point to world space before zoom
+    const wx = (mx - view.tx) / prev;
+    const wy = (my - view.ty) / prev;
+
+    view.scale = next;
+    view.tx = mx - wx * next;
+    view.ty = my - wy * next;
+    applyView();
+  }, { passive:false });
+
+  // =========================
+  // UI buttons
+  // =========================
   document.addEventListener('click', ()=>{
     pinnedId = data.id;
     setDetail(data.id);
   });
 
-  recenterBtn.addEventListener('click', ()=>{
+  recenterBtn.addEventListener('click', (e)=>{
+    e.stopPropagation();
     pinnedId = data.id;
     setDetail(data.id);
-    render();
+    // reset view transform
+    view.tx = 0; view.ty = 0; view.scale = 1;
+    applyView();
+    // keep any manual node moves; just re-render
+    renderAll();
   });
 
-  toggleLabelsBtn.addEventListener('click', ()=>{
+  toggleLabelsBtn.addEventListener('click', (e)=>{
+    e.stopPropagation();
     compact = !compact;
-    render();
+    renderNodes();
   });
 
-  window.addEventListener('resize', ()=> render());
+  window.addEventListener('resize', ()=>{
+    renderAll();
+  });
 
-  // boot
+  // =========================
+  // Boot
+  // =========================
   ensureNodes();
+  // init positions
+  pos.set(data.id, {x: window.innerWidth/2, y: window.innerHeight/2});
+  renderAll();
   setDetail(data.id);
-  render();
+  applyView();
 </script>
 </body>
 </html>
