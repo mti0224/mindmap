@@ -3,247 +3,548 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>蚯蚓貓喵喵 心智圖</title>
+  <title>蚯蚓貓喵喵｜自我認同版心智圖</title>
   <style>
     :root{
-      --bg:#0b1020;
-      --panel:#0f1733;
+      --bg:#070b16;
+      --panel: rgba(15,23,51,.88);
       --text:#e9ecff;
       --muted:#aab1e6;
       --line:rgba(233,236,255,.14);
       --accent:#7c9cff;
-      --shadow: 0 12px 30px rgba(0,0,0,.35);
+      --accent2:#43d19e;
+      --accent3:#ffcc66;
+      --shadow: 0 16px 40px rgba(0,0,0,.45);
       --radius:18px;
     }
     *{ box-sizing:border-box; }
     body{
       margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans TC";
-      background: var(--bg);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans TC", "PingFang TC";
+      background:
+        radial-gradient(1200px 780px at 25% 18%, rgba(124,156,255,.22), transparent 62%),
+        radial-gradient(900px 650px at 82% 65%, rgba(67,209,158,.14), transparent 58%),
+        radial-gradient(900px 650px at 55% 80%, rgba(255,204,102,.10), transparent 55%),
+        var(--bg);
       color:var(--text);
+      min-height:100vh;
       overflow:hidden;
     }
 
     header{
       position:fixed;
-      top:12px;
-      left:12px;
-      right:12px;
-      z-index:5;
+      top:14px;
+      left:14px;
+      right:14px;
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      justify-content:space-between;
+      z-index:10;
+      pointer-events:none;
+    }
+
+    .card{
+      pointer-events:auto;
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(15,23,51,.92), rgba(10,16,36,.78));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      padding:12px 14px;
+      max-width: min(820px, calc(100vw - 28px));
+    }
+
+    .titleRow{ display:flex; align-items:center; gap:10px; }
+    .dot{
+      width:12px; height:12px; border-radius:999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 7px rgba(124,156,255,.16);
+      flex:0 0 auto;
+    }
+
+    h1{ margin:0; font-size:16px; letter-spacing:.3px; line-height:1.2; }
+    .sub{ margin:4px 0 0; color:var(--muted); font-size:12px; line-height:1.45; }
+
+    .pillRow{ margin-top:10px; display:flex; flex-wrap:wrap; gap:8px; }
+    .pill{
+      font-size:12px;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid rgba(233,236,255,.14);
+      background: rgba(233,236,255,.06);
+      color: var(--text);
+      user-select:none;
+    }
+    .pill.a{ border-color: rgba(124,156,255,.30); background: rgba(124,156,255,.10); }
+    .pill.b{ border-color: rgba(67,209,158,.30); background: rgba(67,209,158,.10); }
+    .pill.c{ border-color: rgba(255,204,102,.30); background: rgba(255,204,102,.10); }
+
+    .help{
+      pointer-events:auto;
       display:flex;
       gap:10px;
       align-items:center;
-      justify-content:space-between;
-    }
-
-    .panel{
-      background: rgba(15,23,51,.9);
-      border:1px solid var(--line);
-      border-radius: var(--radius);
-      padding:10px 12px;
-      backdrop-filter: blur(8px);
-      box-shadow: var(--shadow);
+      justify-content:flex-end;
+      flex-wrap:wrap;
     }
 
     .btn{
-      border:1px solid rgba(233,236,255,.2);
+      border:1px solid rgba(233,236,255,.16);
       background: rgba(233,236,255,.08);
       color:var(--text);
-      padding:8px 12px;
+      padding:9px 11px;
       border-radius:12px;
       cursor:pointer;
+      user-select:none;
     }
+    .btn:hover{ background: rgba(233,236,255,.12); }
 
-    #canvas{
-      position:fixed;
-      inset:0;
-      overflow:hidden;
-      cursor:grab;
-    }
+    #wrap{ position:fixed; inset:0; }
+    #stage{ width:100vw; height:100vh; display:block; }
 
-    #world{
-      position:absolute;
-      transform-origin:0 0;
-    }
+    #overlay{ position:absolute; inset:0; }
 
     .node{
       position:absolute;
-      transform:translate(-50%, -50%);
-      padding:10px 14px;
+      transform: translate(-50%, -50%);
+      padding:9px 12px;
       border-radius:999px;
-      border:1px solid rgba(233,236,255,.18);
+      border:1px solid rgba(233,236,255,.16);
       background: rgba(233,236,255,.08);
-      backdrop-filter: blur(6px);
-      cursor:grab;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 24px rgba(0,0,0,.28);
       user-select:none;
-      white-space:nowrap;
+      cursor:default;
+      max-width: 280px;
     }
 
-    .center{
-      background: rgba(124,156,255,.25);
-      border-color: rgba(124,156,255,.45);
-      font-weight:700;
+    .node strong{ font-size:13px; font-weight:800; }
+    .node span{ display:block; margin-top:2px; font-size:11px; color: var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+    .node.center{
+      padding:12px 16px;
+      background: linear-gradient(180deg, rgba(124,156,255,.25), rgba(233,236,255,.08));
+      border-color: rgba(124,156,255,.40);
     }
 
-    svg{
-      position:absolute;
-      inset:0;
-      overflow:visible;
-      pointer-events:none;
+    .node.catA{ border-color: rgba(124,156,255,.30); background: rgba(124,156,255,.10); }
+    .node.catB{ border-color: rgba(67,209,158,.28); background: rgba(67,209,158,.10); }
+    .node.catC{ border-color: rgba(255,204,102,.28); background: rgba(255,204,102,.10); }
+
+    .node:hover{ outline:2px solid rgba(233,236,255,.18); }
+
+    #detail{
+      position:fixed;
+      right:14px;
+      bottom:14px;
+      width:min(420px, calc(100vw - 28px));
+      max-height:min(60vh, 520px);
+      overflow:auto;
+      padding:14px;
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(15,23,51,.92), rgba(10,16,36,.78));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      z-index:12;
+    }
+
+    #detail h2{ margin:0 0 6px; font-size:14px; }
+    #detail p{ margin:0 0 10px; color:var(--muted); font-size:12px; line-height:1.55; }
+    .chips{ display:flex; flex-wrap:wrap; gap:8px; }
+    .chip{
+      font-size:12px;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid rgba(233,236,255,.14);
+      background: rgba(233,236,255,.06);
+    }
+
+    @media (max-width: 720px){
+      header{ flex-direction:column; align-items:stretch; }
+      .help{ justify-content:flex-start; }
     }
   </style>
 </head>
 <body>
 
 <header>
-  <div class="panel">
-    🧠 蚯蚓貓喵喵 心智圖（可縮放 / 可平移 / 可拖曳固定）
+  <div class="card" aria-label="標題">
+    <div class="titleRow">
+      <div class="dot" aria-hidden="true"></div>
+      <div>
+        <h1>蚯蚓貓喵喵｜自我認同版心智圖</h1>
+        <p class="sub">核心能力：數學與數據統計、程式設計、教學。主投入：YouTube（用資工能力輔助）。未來：投入資工（AI/數據更佳）或教學領域，同時斜槓經營頻道。</p>
+      </div>
+    </div>
+    <div class="pillRow" aria-label="快速標籤">
+      <span class="pill a">數學 & 數據統計</span>
+      <span class="pill a">程式設計</span>
+      <span class="pill b">教學 / 表達</span>
+      <span class="pill b">YouTube 主線</span>
+      <span class="pill c">斜槓人生</span>
+    </div>
   </div>
 
-  <div class="panel">
-    <button class="btn" id="reset">重置佈局</button>
-    <button class="btn" id="auto">自動排列</button>
+  <div class="help">
+    <div class="card" style="padding:10px 12px;">
+      <div style="font-size:12px; color:var(--muted); line-height:1.4;">提示：把滑鼠移到節點上會顯示重點；點節點可固定右下角資訊。</div>
+      <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn" id="recenter">重新置中</button>
+        <button class="btn" id="toggleLabels">切換簡潔模式</button>
+      </div>
+    </div>
   </div>
 </header>
 
-<div id="canvas">
-  <div id="world">
-    <svg id="edges"></svg>
-  </div>
+<div id="wrap">
+  <svg id="stage" xmlns="http://www.w3.org/2000/svg" aria-label="連線畫布">
+    <defs>
+      <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="2.2" result="blur" />
+        <feColorMatrix in="blur" type="matrix" values="
+            1 0 0 0 0
+            0 1 0 0 0
+            0 0 1 0 0
+            0 0 0 12 -6" result="glow"/>
+        <feMerge>
+          <feMergeNode in="glow"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+    </defs>
+    <g id="edges"></g>
+  </svg>
+  <div id="overlay" aria-label="節點層"></div>
 </div>
 
+<aside id="detail" aria-live="polite">
+  <h2 id="dTitle">蚯蚓貓喵喵（中心）</h2>
+  <p id="dDesc">這是一張「展示型」心智圖：把你自我認同的核心能力、主投入領域與未來方向，畫成一張可一眼看懂的能力地圖。</p>
+  <div class="chips" id="dChips"></div>
+</aside>
+
 <script>
+  // =========================
+  // 展示型資料（較多節點）
+  // =========================
+  const data = {
+    id: 'center',
+    label: '蚯蚓貓喵喵',
+    hint: '數學×程式×教學｜YouTube主線｜斜槓人生',
+    desc: '你把「數學與統計」的嚴謹、 「程式設計」的落地、 「教學/表達」的清晰結合起來。現階段主投入是 YouTube，長期希望走向資工（AI/數據更佳）或教學領域，並保持斜槓經營。',
+    tags: ['核心：數學與數據統計','核心：程式設計','核心：教學','主投入：YouTube','目標：斜槓人生'],
+    children: [
+      {
+        id: 'core_math',
+        label: '數學 & 數據統計',
+        hint: '推導、機率、統計、驗證',
+        cat: 'A',
+        desc: '用推導與統計思維驗證假設、拆解系統、評估選擇，避免只靠直覺。',
+        tags: ['機率','統計','推導','驗證','數據敏感度'],
+        children: [
+          { id:'m_prob', label:'機率思維', hint:'期望值/分佈', cat:'A', desc:'擅長用期望值與分佈描述「結果」與「不確定性」。', tags:['期望值','分佈','風險'] },
+          { id:'m_stats', label:'統計判讀', hint:'樣本/偏差/比較', cat:'A', desc:'能意識到樣本量、偏差與比較基準的重要性。', tags:['樣本','偏差','比較'] },
+          { id:'m_model', label:'數據建模', hint:'指標/趨勢/解釋', cat:'A', desc:'會用指標把現象量化，並用合理方式解釋趨勢。', tags:['指標','趨勢','可解釋'] },
+        ]
+      },
+      {
+        id: 'core_code',
+        label: '程式設計',
+        hint: '把想法做成可用的東西',
+        cat: 'A',
+        desc: '你偏工程落地：把需求寫成工具、服務或流程，能快速迭代修正。',
+        tags: ['工具化','自動化','結構化資料','部署/環境'],
+        children: [
+          { id:'c_python', label:'Python', hint:'腳本/資料處理', cat:'A', desc:'適合快速把想法做成原型與工具。', tags:['腳本','原型','資料處理'] },
+          { id:'c_backend', label:'系統/後端', hint:'服務化/維運', cat:'A', desc:'把功能變成穩定可用的服務，並可持續更新。', tags:['服務','維運','架構'] },
+          { id:'c_bot', label:'Bot/自動化', hint:'工作流加速', cat:'A', desc:'用自動化把重複工作縮短成一鍵流程。', tags:['自動化','工作流','效率'] },
+          { id:'c_datafmt', label:'資料結構', hint:'JSON/規格化', cat:'A', desc:'重視結構化資料，利於查詢、擴充與重用。', tags:['JSON','結構化','規格'] },
+        ]
+      },
+      {
+        id: 'core_teach',
+        label: '教學 / 表達',
+        hint: '把複雜講清楚',
+        cat: 'B',
+        desc: '你能把複雜概念拆成可理解的步驟，並用例子與結構輸出。',
+        tags: ['教學設計','結構化表達','例子','觀眾視角'],
+        children: [
+          { id:'t_explain', label:'結構化講解', hint:'流程/層次/重點', cat:'B', desc:'善於先給框架，再填細節，觀眾更容易跟上。', tags:['框架','層次','重點'] },
+          { id:'t_material', label:'教材化', hint:'題目/練習/範例', cat:'B', desc:'會把知識整理成可練習、可複習的形式。', tags:['題目','練習','範例'] },
+          { id:'t_feedback', label:'互動與回饋', hint:'社群/留言/修正', cat:'B', desc:'能從回饋調整表達方式與內容重點。', tags:['社群','回饋','迭代'] },
+        ]
+      },
+      {
+        id: 'now_youtube',
+        label: '現階段主投入：YouTube',
+        hint: '用資工能力輔助內容',
+        cat: 'B',
+        desc: '你把分析能力與工程能力轉成觀眾看得懂的內容，形成個人品牌。',
+        tags: ['主線','內容產出','品牌','社群'],
+        children: [
+          { id:'y_analysis', label:'分析型內容', hint:'數據/機制/策略', cat:'B', desc:'用數據與推理提供可行結論，觀眾容易信服。', tags:['數據','推理','結論'] },
+          { id:'y_tooling', label:'技術輔助產出', hint:'自動化/工具/腳本', cat:'A', desc:'用工具提升產出效率（資料整理、計算、流程）。', tags:['工具','自動化','效率'] },
+          { id:'y_community', label:'社群互動', hint:'Discord/留言', cat:'B', desc:'社群讓你能收集需求與新題材，形成正回饋循環。', tags:['Discord','留言','需求'] },
+        ]
+      },
+      {
+        id: 'future_cs',
+        label: '未來：資工（AI/數據更佳）',
+        hint: '把能力帶到產業/研究',
+        cat: 'C',
+        desc: '如果走資工路線，你的強項會落在「數據×工程×可解釋」的應用型方向。',
+        tags: ['AI','Data','應用落地','系統整合'],
+        children: [
+          { id:'f_data', label:'Data 方向', hint:'分析/管線/指標', cat:'C', desc:'偏資料工程/分析：把數據變成決策與產品能力。', tags:['資料管線','指標','分析'] },
+          { id:'f_ai', label:'AI 應用', hint:'模型×系統', cat:'C', desc:'偏 AI 工程：把模型接到真實系統中，重點是可用與可評估。', tags:['模型','整合','評估'] },
+          { id:'f_product', label:'產品型工程', hint:'使用者價值', cat:'C', desc:'把技術做成使用者會用的東西，是你很自然的延伸。', tags:['產品','使用者','迭代'] },
+        ]
+      },
+      {
+        id: 'future_teach',
+        label: '未來：教學領域',
+        hint: '教育×技術',
+        cat: 'C',
+        desc: '你具備把硬知識講清楚的能力，若走教學路線，技術底子會是差異化。',
+        tags: ['教學','教材','技術差異化','影響力'],
+        children: [
+          { id:'ft_curr', label:'課程/教材設計', hint:'可學可練', cat:'C', desc:'把內容設計成可練習的路徑，會是強項。', tags:['課程','教材','路徑'] },
+          { id:'ft_edtech', label:'教育科技', hint:'工具化教學', cat:'C', desc:'把教學流程工具化、平台化，也很適合你。', tags:['EdTech','工具','平台'] },
+        ]
+      },
+      {
+        id: 'slash',
+        label: '終極目標：斜槓人生',
+        hint: '多軌並行、互相加乘',
+        cat: 'C',
+        desc: '你不是在二選一，而是用「技術×教學×內容」讓每條線互相加乘。',
+        tags: ['多軌','加乘','自由度','長期'],
+        children: [
+          { id:'s_combo', label:'技術×教學×內容', hint:'三力合一', cat:'C', desc:'把工程能力做成工具，把數學/統計做成洞察，把教學做成影響力。', tags:['工具','洞察','影響力'] },
+          { id:'s_brand', label:'個人品牌', hint:'長期累積', cat:'C', desc:'頻道與作品集會是你的長期資產。', tags:['品牌','作品集','累積'] },
+        ]
+      },
+    ]
+  };
 
-const nodesData = [
-  {id:'center', label:'蚯蚓貓喵喵', x:0, y:0, center:true},
-  {id:'dev', label:'系統開發', x:200, y:0},
-  {id:'game', label:'遊戲分析', x:-200, y:0},
-  {id:'creator', label:'技術創作', x:0, y:200},
-  {id:'ai', label:'AI應用', x:0, y:-200},
-  {id:'backend', label:'Backend', x:350, y:100},
-  {id:'bot', label:'Bot/Automation', x:350, y:-100},
-  {id:'youtube', label:'YouTube', x:-350, y:100},
-  {id:'tools', label:'工具開發', x:-350, y:-100}
-];
+  // =========================
+  // 佈局與渲染（展示用：自動排好、不提供拖曳）
+  // =========================
+  const overlay = document.getElementById('overlay');
+  const edgesG = document.getElementById('edges');
+  const stage = document.getElementById('stage');
 
-const links = [
-  ['center','dev'],['center','game'],['center','creator'],['center','ai'],
-  ['dev','backend'],['dev','bot'],
-  ['game','youtube'],['game','tools']
-];
+  const dTitle = document.getElementById('dTitle');
+  const dDesc  = document.getElementById('dDesc');
+  const dChips = document.getElementById('dChips');
 
-const world = document.getElementById('world');
-const edgesSvg = document.getElementById('edges');
+  const recenterBtn = document.getElementById('recenter');
+  const toggleLabelsBtn = document.getElementById('toggleLabels');
 
-// 建立節點
-const nodeEls = {};
-nodesData.forEach(n=>{
-  const el = document.createElement('div');
-  el.className = 'node' + (n.center?' center':'');
-  el.textContent = n.label;
-  world.appendChild(el);
-  nodeEls[n.id] = el;
-  n.el = el;
-});
+  const flat = [];
+  const parent = new Map();
+  const children = new Map();
 
-function render(){
-  // nodes
-  nodesData.forEach(n=>{
-    n.el.style.left = n.x+'px';
-    n.el.style.top = n.y+'px';
-  });
-
-  // edges
-  edgesSvg.innerHTML='';
-  links.forEach(([a,b])=>{
-    const na = nodesData.find(n=>n.id===a);
-    const nb = nodesData.find(n=>n.id===b);
-
-    const line = document.createElementNS("http://www.w3.org/2000/svg","line");
-    line.setAttribute('x1',na.x);
-    line.setAttribute('y1',na.y);
-    line.setAttribute('x2',nb.x);
-    line.setAttribute('y2',nb.y);
-    line.setAttribute('stroke','rgba(233,236,255,.3)');
-    edgesSvg.appendChild(line);
-  });
-}
-
-render();
-
-// 拖曳節點
-nodesData.forEach(n=>{
-  let dragging=false;
-  n.el.onpointerdown=e=>{
-    dragging=true;
-    n.el.setPointerCapture(e.pointerId);
+  function walk(node, p=null){
+    flat.push(node);
+    if(p) parent.set(node.id, p.id);
+    children.set(node.id, (node.children||[]).map(c=>c.id));
+    (node.children||[]).forEach(c=>walk(c, node));
   }
-  n.el.onpointermove=e=>{
-    if(!dragging) return;
-    n.x+=e.movementX/scale;
-    n.y+=e.movementY/scale;
+  walk(data);
+
+  const pos = new Map();
+  let compact = false;
+  let pinnedId = data.id;
+
+  function depthMap(){
+    const depth = new Map();
+    depth.set(data.id, 0);
+    const q = [data.id];
+    while(q.length){
+      const id = q.shift();
+      const d = depth.get(id);
+      for(const ch of (children.get(id)||[])){
+        depth.set(ch, d+1);
+        q.push(ch);
+      }
+    }
+    return depth;
+  }
+
+  function ringLayout(){
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const cx = w/2;
+    const cy = h/2;
+
+    const depth = depthMap();
+    const byDepth = new Map();
+    for(const n of flat){
+      const d = depth.get(n.id) ?? 0;
+      if(!byDepth.has(d)) byDepth.set(d, []);
+      byDepth.get(d).push(n);
+    }
+
+    const base = Math.min(w,h);
+    // 展示型：拉開距離、避免擠在一起
+    const radii = compact
+      ? {0:0, 1: base*0.20, 2: base*0.34, 3: base*0.48, 4: base*0.60}
+      : {0:0, 1: base*0.26, 2: base*0.44, 3: base*0.62, 4: base*0.78};
+
+    for(const [d, nodes] of byDepth.entries()){
+      if(d===0){ pos.set(data.id, {x:cx, y:cy}); continue; }
+      const r = radii[d] ?? (base*(0.26 + d*0.16));
+      const step = (Math.PI*2) / nodes.length;
+      // 每圈給一點角度偏移，減少直線疊在一起
+      const start = -Math.PI/2 + d*0.22;
+      nodes.forEach((n, i)=>{
+        const a = start + i*step;
+        pos.set(n.id, { x: cx + Math.cos(a)*r, y: cy + Math.sin(a)*r });
+      });
+    }
+  }
+
+  function edgePath(a, b){
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const c1x = a.x + dx*0.28;
+    const c1y = a.y + dy*0.06;
+    const c2x = a.x + dx*0.72;
+    const c2y = a.y + dy*0.94;
+    return `M ${a.x} ${a.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${b.x} ${b.y}`;
+  }
+
+  const nodeEls = new Map();
+
+  function catClass(n){
+    if(n.id===data.id) return 'center';
+    if(n.cat==='A') return 'catA';
+    if(n.cat==='B') return 'catB';
+    if(n.cat==='C') return 'catC';
+    return '';
+  }
+
+  function createNodeEl(n){
+    const el = document.createElement('div');
+    el.className = `node ${n.id===data.id?'center':''} ${catClass(n)}`;
+    el.dataset.id = n.id;
+    el.innerHTML = `<strong>${n.label}</strong><span>${n.hint||''}</span>`;
+
+    el.addEventListener('mouseenter', ()=>{
+      if(pinnedId) return;
+      setDetail(n.id);
+    });
+
+    el.addEventListener('mouseleave', ()=>{
+      if(pinnedId) return;
+      setDetail(data.id);
+    });
+
+    el.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      pinnedId = n.id;
+      setDetail(n.id);
+    });
+
+    return el;
+  }
+
+  function ensureNodes(){
+    for(const n of flat){
+      if(!nodeEls.has(n.id)){
+        const el = createNodeEl(n);
+        nodeEls.set(n.id, el);
+        overlay.appendChild(el);
+      }
+    }
+  }
+
+  function renderEdges(){
+    edgesG.innerHTML = '';
+    const frag = document.createDocumentFragment();
+
+    for(const n of flat){
+      if(n.id===data.id) continue;
+      const pid = parent.get(n.id);
+      if(!pid) continue;
+      const a = pos.get(pid);
+      const b = pos.get(n.id);
+      if(!a||!b) continue;
+
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d', edgePath(a,b));
+      path.setAttribute('fill','none');
+      path.setAttribute('stroke','rgba(233,236,255,.20)');
+      path.setAttribute('stroke-width','1.35');
+      path.setAttribute('stroke-linecap','round');
+      path.setAttribute('filter','url(#glow)');
+      frag.appendChild(path);
+    }
+
+    edgesG.appendChild(frag);
+  }
+
+  function renderNodes(){
+    for(const n of flat){
+      const el = nodeEls.get(n.id);
+      const p  = pos.get(n.id);
+      if(!el||!p) continue;
+      el.style.left = p.x+'px';
+      el.style.top  = p.y+'px';
+      if(compact){
+        // 簡潔模式：只留標題
+        el.querySelector('span').style.display = 'none';
+      } else {
+        el.querySelector('span').style.display = 'block';
+      }
+    }
+  }
+
+  function setDetail(id){
+    const n = flat.find(x=>x.id===id) || data;
+    dTitle.textContent = (id===data.id) ? `${data.label}（中心）` : n.label;
+    dDesc.textContent  = n.desc || n.hint || '';
+    dChips.innerHTML = '';
+    (n.tags||[]).slice(0, 16).forEach(t=>{
+      const c = document.createElement('span');
+      c.className = 'chip';
+      c.textContent = t;
+      dChips.appendChild(c);
+    });
+  }
+
+  function render(){
+    ringLayout();
+    renderEdges();
+    renderNodes();
+  }
+
+  // interactions
+  document.addEventListener('click', ()=>{
+    pinnedId = data.id;
+    setDetail(data.id);
+  });
+
+  recenterBtn.addEventListener('click', ()=>{
+    pinnedId = data.id;
+    setDetail(data.id);
     render();
-  }
-  n.el.onpointerup=()=>dragging=false;
-});
-
-// 平移 & 縮放
-let scale=1;
-let offsetX=window.innerWidth/2;
-let offsetY=window.innerHeight/2;
-
-function updateTransform(){
-  world.style.transform = `translate(${offsetX}px,${offsetY}px) scale(${scale})`;
-}
-updateTransform();
-
-let panning=false;
-
-canvas.onpointerdown=e=>{
-  if(e.target!==canvas) return;
-  panning=true;
-}
-
-canvas.onpointermove=e=>{
-  if(!panning) return;
-  offsetX+=e.movementX;
-  offsetY+=e.movementY;
-  updateTransform();
-}
-
-canvas.onpointerup=()=>panning=false;
-
-canvas.onwheel=e=>{
-  e.preventDefault();
-  const delta = -e.deltaY*0.001;
-  scale+=delta;
-  scale=Math.max(0.4,Math.min(2.5,scale));
-  updateTransform();
-}
-
-// 自動排列
-function autoLayout(){
-  const r=250;
-  nodesData.forEach((n,i)=>{
-    if(n.center){n.x=0;n.y=0;return}
-    const angle=i*(Math.PI*2/(nodesData.length-1));
-    n.x=Math.cos(angle)*r;
-    n.y=Math.sin(angle)*r;
   });
+
+  toggleLabelsBtn.addEventListener('click', ()=>{
+    compact = !compact;
+    render();
+  });
+
+  window.addEventListener('resize', ()=> render());
+
+  // boot
+  ensureNodes();
+  setDetail(data.id);
   render();
-}
-
-// reset
-document.getElementById('reset').onclick=()=>{
-  scale=1;
-  offsetX=window.innerWidth/2;
-  offsetY=window.innerHeight/2;
-  autoLayout();
-  updateTransform();
-}
-
-document.getElementById('auto').onclick=autoLayout;
-
 </script>
 </body>
 </html>
