@@ -63,7 +63,15 @@
     }
 
     h1{ margin:0; font-size:16px; letter-spacing:.3px; line-height:1.2; }
-    .sub{ margin:4px 0 0; color:var(--muted); font-size:12px; line-height:1.55; max-width:620px; white-space:normal; word-break:break-word; }
+    .sub{
+      margin:4px 0 0;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.55;
+      max-width:620px;
+      white-space:normal;
+      word-break:break-word;
+    }
 
     .pillRow{ margin-top:10px; display:flex; flex-wrap:wrap; gap:8px; }
     .pill{
@@ -149,6 +157,7 @@
       box-shadow: var(--shadow);
       backdrop-filter: blur(10px);
       z-index:12;
+      white-space:pre-wrap; /* allow \n in textContent */
     }
 
     #detail h2{ margin:0 0 6px; font-size:14px; }
@@ -174,7 +183,7 @@
       </div>
     </div>
     <div class="pillRow" aria-label="快速標籤">
-      <span class="pill a">數學 & 數據統計</span>
+      <span class="pill a">數學 &amp; 數據統計</span>
       <span class="pill a">程式設計</span>
       <span class="pill b">教學 / 表達</span>
       <span class="pill b">YouTube 主線</span>
@@ -186,8 +195,8 @@
     <div class="card" style="padding:10px 12px;">
       <div style="font-size:12px; color:var(--muted); line-height:1.4;">操作：拖曳空白處可平移；拖曳節點可調位置；滑鼠滾輪可縮放。</div>
       <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
-        <button class="btn" id="recenter">重新置中</button>
-        <button class="btn" id="toggleLabels">切換簡潔模式</button>
+        <button class="btn" id="recenter" type="button">重新置中</button>
+        <button class="btn" id="toggleLabels" type="button">切換簡潔模式</button>
       </div>
     </div>
   </div>
@@ -283,7 +292,36 @@
         cat: 'B',
         desc: '把分析能力與工程能力轉成觀眾看得懂的內容。',
         example:'例如：遊戲分析影片、技術教學影片',
-        tags: ['主線','內容產出','品牌','社群']
+        tags: ['主線','內容產出','品牌','社群'],
+        children: [
+          {
+            id:'y_analysis',
+            label:'分析型內容',
+            hint:'數據/機制/策略',
+            cat:'B',
+            desc:'用數據與推理把內容做得更有說服力，讓觀眾「看完能用」。',
+            example:'例如：數值分析、強度排名、抽卡/機制解析',
+            tags:['數據','推理','結論']
+          },
+          {
+            id:'y_tooling',
+            label:'技術輔助產出',
+            hint:'自動化/工具/腳本',
+            cat:'A',
+            desc:'用工具提升資料整理與影片產出的效率。',
+            example:'例如：資料整理腳本、工具化計算器',
+            tags:['工具','自動化','效率']
+          },
+          {
+            id:'y_community',
+            label:'社群互動',
+            hint:'Discord/留言/回饋',
+            cat:'B',
+            desc:'透過社群互動蒐集題材與需求，讓內容迭代更快。',
+            example:'例如：Discord 社群、留言 Q&A',
+            tags:['Discord','回饋','需求']
+          }
+        ]
       },
       {
         id: 'future_cs',
@@ -291,8 +329,37 @@
         hint: '把能力帶到產業/研究',
         cat: 'C',
         desc: '你的強項會落在「數據×工程×可解釋」的應用型方向。',
-        example:'例如：AI應用系統開發',
-        tags: ['AI','Data','應用落地','系統整合']
+        example:'例如：AI/數據系統開發、模型整合到產品',
+        tags: ['AI','Data','應用落地','系統整合'],
+        children: [
+          {
+            id:'f_data',
+            label:'Data 方向',
+            hint:'分析/管線/指標',
+            cat:'C',
+            desc:'偏資料工程/分析：把數據變成決策與產品能力。',
+            example:'例如：資料管線、指標設計、儀表板/報表',
+            tags:['資料管線','指標','分析']
+          },
+          {
+            id:'f_ai',
+            label:'AI 應用',
+            hint:'模型×系統',
+            cat:'C',
+            desc:'偏 AI 工程：把模型接到真實系統中，重點是可用與可評估。',
+            example:'例如：推論服務、評估流程、A/B 指標',
+            tags:['模型','整合','評估']
+          },
+          {
+            id:'f_product',
+            label:'產品型工程',
+            hint:'使用者價值',
+            cat:'C',
+            desc:'把技術做成使用者會用的東西，是你自然的延伸。',
+            example:'例如：工具型網站/系統、可用的功能設計',
+            tags:['產品','使用者','迭代']
+          }
+        ]
       },
       {
         id: 'future_teach',
@@ -300,8 +367,28 @@
         hint: '教育×技術',
         cat: 'C',
         desc: '若走教學路線，技術底子會是差異化。',
-        example:'例如：資工教學內容',
-        tags: ['教學','教材','技術差異化','影響力']
+        example:'例如：把資工/AI 概念做成可學可練的內容',
+        tags: ['教學','教材','技術差異化','影響力'],
+        children: [
+          {
+            id:'ft_curr',
+            label:'課程/教材設計',
+            hint:'可學可練',
+            cat:'C',
+            desc:'把內容設計成可練習的路徑，讓學習更有感。',
+            example:'例如：題庫、講義、練習流程',
+            tags:['課程','教材','路徑']
+          },
+          {
+            id:'ft_edtech',
+            label:'教育科技',
+            hint:'工具化教學',
+            cat:'C',
+            desc:'把教學流程工具化、平台化，讓教學更有效率。',
+            example:'例如：互動式小工具、學習輔助系統',
+            tags:['EdTech','工具','平台']
+          }
+        ]
       },
       {
         id: 'slash',
@@ -310,7 +397,36 @@
         cat: 'C',
         desc: '用「技術×教學×內容」讓每條線互相加乘。',
         example:'例如：YouTube + 技術 + 教學並行',
-        tags: ['多軌','加乘','自由度','長期']
+        tags: ['多軌','加乘','自由度','長期'],
+        children: [
+          {
+            id:'s_combo',
+            label:'技術×教學×內容',
+            hint:'三力合一',
+            cat:'C',
+            desc:'把工程能力做成工具，把數學/統計做成洞察，把教學做成影響力。',
+            example:'例如：用工具支援內容產出，用教學放大影響力',
+            tags:['工具','洞察','影響力']
+          },
+          {
+            id:'s_brand',
+            label:'個人品牌',
+            hint:'長期累積',
+            cat:'C',
+            desc:'頻道與作品集會是你的長期資產。',
+            example:'例如：作品整理頁、系列影片、社群沉澱',
+            tags:['品牌','作品集','累積']
+          },
+          {
+            id:'s_growth',
+            label:'長期成長策略',
+            hint:'迭代/穩定輸出',
+            cat:'C',
+            desc:'用可持續的節奏迭代：把靈感變流程，把流程變系統。',
+            example:'例如：固定產出節奏 + 自動化工作流',
+            tags:['迭代','節奏','流程']
+          }
+        ]
       }
     ]
   };
@@ -363,6 +479,9 @@
     return depth;
   }
 
+  const nodeEls = new Map();
+  const manual = new Set(); // nodes user moved
+
   function ringLayout(){
     const w = window.innerWidth;
     const h = window.innerHeight;
@@ -388,8 +507,7 @@
       const step = (Math.PI*2) / nodes.length;
       const start = -Math.PI/2 + d*0.22;
       nodes.forEach((n, i)=>{
-        // only auto-place if not manually moved
-        if(manual.has(n.id)) return;
+        if(manual.has(n.id)) return; // keep manual positions
         const a = start + i*step;
         pos.set(n.id, { x: cx + Math.cos(a)*r, y: cy + Math.sin(a)*r });
       });
@@ -406,12 +524,6 @@
     return `M ${a.x} ${a.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${b.x} ${b.y}`;
   }
 
-  // =========================
-  // Nodes
-  // =========================
-  const nodeEls = new Map();
-  const manual = new Set(); // nodes user moved
-
   function catClass(n){
     if(n.id===data.id) return 'center';
     if(n.cat==='A') return 'catA';
@@ -420,80 +532,14 @@
     return '';
   }
 
-  function createNodeEl(n){
-    const el = document.createElement('div');
-    el.className = `node ${n.id===data.id?'center':''} ${catClass(n)}`;
-    el.dataset.id = n.id;
-    el.innerHTML = `<strong>${n.label}</strong><span>${n.hint||''}</span>`;
-
-    // Hover shows detail if not pinned by click
-    el.addEventListener('mouseenter', ()=>{
-      if(pinnedId) return;
-      setDetail(n.id);
-    });
-    el.addEventListener('mouseleave', ()=>{
-      if(pinnedId) return;
-      setDetail(data.id);
-    });
-
-    // Click pins detail panel
-    el.addEventListener('click', (e)=>{
-      e.stopPropagation();
-      pinnedId = n.id;
-      setDetail(n.id);
-    });
-
-    // Drag node (in world coords)
-    el.addEventListener('pointerdown', (e)=>{
-      e.stopPropagation();
-      el.setPointerCapture(e.pointerId);
-      dragState.draggingNodeId = n.id;
-      dragState.lastX = e.clientX;
-      dragState.lastY = e.clientY;
-      viewport.classList.add('grabbing');
-    });
-
-    el.addEventListener('pointermove', (e)=>{
-      if(dragState.draggingNodeId !== n.id) return;
-      const dx = (e.clientX - dragState.lastX) / view.scale;
-      const dy = (e.clientY - dragState.lastY) / view.scale;
-      dragState.lastX = e.clientX;
-      dragState.lastY = e.clientY;
-
-      const p = pos.get(n.id) || {x: window.innerWidth/2, y: window.innerHeight/2};
-      pos.set(n.id, {x: p.x + dx, y: p.y + dy});
-      manual.add(n.id);
-      renderEdges();
-      renderNodes();
-    });
-
-    el.addEventListener('pointerup', ()=>{
-      if(dragState.draggingNodeId === n.id) dragState.draggingNodeId = null;
-      viewport.classList.remove('grabbing');
-    });
-
-    return el;
-  }
-
-  function ensureNodes(){
-    for(const n of flat){
-      if(!nodeEls.has(n.id)){
-        const el = createNodeEl(n);
-        nodeEls.set(n.id, el);
-        overlay.appendChild(el);
-      }
-    }
-  }
-
   // =========================
   // Detail panel
   // =========================
   function setDetail(id){
     const n = flat.find(x=>x.id===id) || data;
     dTitle.textContent = (id===data.id) ? `${data.label}（中心）` : n.label;
-    dDesc.textContent  = (n.desc || n.hint || '') + (n.example ? '
-
-' + n.example : '');
+    // IMPORTANT: Use explicit \n\n to avoid invalid tokens injected by editors.
+    dDesc.textContent  = (n.desc || n.hint || '') + (n.example ? `\n\n${n.example}` : '');
     dChips.innerHTML = '';
     (n.tags||[]).slice(0, 16).forEach(t=>{
       const c = document.createElement('span');
@@ -579,21 +625,19 @@
   window.addEventListener('pointerup', ()=>{
     dragState.panning = false;
     viewport.classList.remove('grabbing');
+    dragState.draggingNodeId = null;
   });
 
-  // Zoom with wheel (optional but useful when panels block view)
   viewport.addEventListener('wheel', (e)=>{
     e.preventDefault();
     const prev = view.scale;
     const delta = -e.deltaY * 0.001;
     const next = Math.max(0.55, Math.min(2.2, prev + delta));
 
-    // zoom around cursor
     const rect = viewport.getBoundingClientRect();
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
 
-    // convert mouse point to world space before zoom
     const wx = (mx - view.tx) / prev;
     const wy = (my - view.ty) / prev;
 
@@ -602,6 +646,73 @@
     view.ty = my - wy * next;
     applyView();
   }, { passive:false });
+
+  // =========================
+  // Nodes (DOM)
+  // =========================
+  function createNodeEl(n){
+    const el = document.createElement('div');
+    el.className = `node ${n.id===data.id?'center':''} ${catClass(n)}`;
+    el.dataset.id = n.id;
+    el.innerHTML = `<strong>${n.label}</strong><span>${n.hint||''}</span>`;
+
+    el.addEventListener('mouseenter', ()=>{
+      if(pinnedId) return;
+      setDetail(n.id);
+    });
+
+    el.addEventListener('mouseleave', ()=>{
+      if(pinnedId) return;
+      setDetail(data.id);
+    });
+
+    el.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      pinnedId = n.id;
+      setDetail(n.id);
+    });
+
+    // Drag node
+    el.addEventListener('pointerdown', (e)=>{
+      e.stopPropagation();
+      el.setPointerCapture(e.pointerId);
+      dragState.draggingNodeId = n.id;
+      dragState.lastX = e.clientX;
+      dragState.lastY = e.clientY;
+      viewport.classList.add('grabbing');
+    });
+
+    el.addEventListener('pointermove', (e)=>{
+      if(dragState.draggingNodeId !== n.id) return;
+      const dx = (e.clientX - dragState.lastX) / view.scale;
+      const dy = (e.clientY - dragState.lastY) / view.scale;
+      dragState.lastX = e.clientX;
+      dragState.lastY = e.clientY;
+
+      const p = pos.get(n.id) || {x: window.innerWidth/2, y: window.innerHeight/2};
+      pos.set(n.id, {x: p.x + dx, y: p.y + dy});
+      manual.add(n.id);
+      renderEdges();
+      renderNodes();
+    });
+
+    el.addEventListener('pointerup', ()=>{
+      if(dragState.draggingNodeId === n.id) dragState.draggingNodeId = null;
+      viewport.classList.remove('grabbing');
+    });
+
+    return el;
+  }
+
+  function ensureNodes(){
+    for(const n of flat){
+      if(!nodeEls.has(n.id)){
+        const el = createNodeEl(n);
+        nodeEls.set(n.id, el);
+        overlay.appendChild(el);
+      }
+    }
+  }
 
   // =========================
   // UI buttons
@@ -615,10 +726,8 @@
     e.stopPropagation();
     pinnedId = data.id;
     setDetail(data.id);
-    // reset view transform
     view.tx = 0; view.ty = 0; view.scale = 1;
     applyView();
-    // keep any manual node moves; just re-render
     renderAll();
   });
 
@@ -628,19 +737,35 @@
     renderNodes();
   });
 
-  window.addEventListener('resize', ()=>{
-    renderAll();
-  });
+  window.addEventListener('resize', ()=>{ renderAll(); });
+
+  // =========================
+  // Self-tests (basic sanity)
+  // =========================
+  function runSelfTests(){
+    const errors = [];
+    if(!overlay || !edgesG || !viewport) errors.push('DOM refs missing');
+    if(flat.length < 5) errors.push('Unexpectedly few nodes');
+    // Ensure positions exist for each node after layout
+    for(const n of flat){
+      if(!pos.get(n.id)) errors.push(`Missing pos for ${n.id}`);
+    }
+    if(errors.length){
+      console.error('[Mindmap self-test] failed:', errors);
+    } else {
+      console.log('[Mindmap self-test] ok');
+    }
+  }
 
   // =========================
   // Boot
   // =========================
   ensureNodes();
-  // init positions
   pos.set(data.id, {x: window.innerWidth/2, y: window.innerHeight/2});
   renderAll();
   setDetail(data.id);
   applyView();
+  runSelfTests();
 </script>
 </body>
 </html>
